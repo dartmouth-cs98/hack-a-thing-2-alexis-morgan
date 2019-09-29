@@ -12,3 +12,11 @@ Alexis Harris, Morgan Sorbaro
 ## What Didn't Work
 
 ## Resources
+
+https://www.raywenderlich.com/71-spritekit-tutorial-for-beginners
+
+https://www.raywenderlich.com/55-how-to-make-a-game-like-candy-crush-with-spritekit-and-swift-part-1
+
+https://www.raywenderlich.com/54-how-to-make-a-game-like-candy-crush-with-spritekit-and-swift-part-2
+
+

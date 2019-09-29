@@ -34,6 +34,7 @@ import UIKit
 import SpriteKit
 import AVFoundation
 
+
 class GameViewController: UIViewController {
   
   // MARK: Properties
@@ -87,7 +88,7 @@ class GameViewController: UIViewController {
     
     level = Level(filename: "Level_1")
     scene.level = level
-    
+    scene.swipeHandler = handleSwipe
     // Present the scene.
     skView.presentScene(scene)
     scene.addTiles()
@@ -111,6 +112,15 @@ class GameViewController: UIViewController {
   
   override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
     return [.portrait, .portraitUpsideDown]
+  }
+  
+  func handleSwipe(_ swap: Swap) {
+    view.isUserInteractionEnabled = false
+    
+    level.performSwap(swap)
+    scene.animate(swap) {
+      self.view.isUserInteractionEnabled = true
+    }
   }
   
   

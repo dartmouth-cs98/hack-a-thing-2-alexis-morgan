@@ -33,6 +33,8 @@
 import SpriteKit
 import GameplayKit
 
+
+var swipeHandler: ((Swap) -> Void)?
 class GameScene: SKScene {
   // Sound FX
   let swapSound = SKAction.playSoundFileNamed("Chomp.wav", waitForCompletion: false)
@@ -42,6 +44,9 @@ class GameScene: SKScene {
   let addCookieSound = SKAction.playSoundFileNamed("Drip.wav", waitForCompletion: false)
   
   var level: Level!
+  
+  private var swipeFromColumn: Int?
+  private var swipeFromRow: Int?
   
   let tileWidth: CGFloat = 32.0
   let tileHeight: CGFloat = 36.0
@@ -100,6 +105,15 @@ class GameScene: SKScene {
       y: CGFloat(row) * tileHeight + tileHeight / 2)
   }
   
+  private func convertPoint(_ point: CGPoint) -> (success: Bool, column: Int, row: Int) {
+    if point.x >= 0 && point.x < CGFloat(numColumns) * tileWidth &&
+      point.y >= 0 && point.y < CGFloat(numRows) * tileHeight {
+      return (true, Int(point.x / tileWidth), Int(point.y / tileHeight))
+    } else {
+      return (false, 0, 0)  // invalid location
+    }
+  }
+  
   func addTiles() {
     // 1
     for row in 0..<numRows {
@@ -143,6 +157,103 @@ class GameScene: SKScene {
         }
       }
     }
+  }
+  
+  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    swipeFromColumn = nil
+    swipeFromRow = nil
+  }
+  
+  override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+    touchesEnded(touches, with: event)
+  }
+  
+  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    // 1
+    guard let touch = touches.first else { return }
+    let location = touch.location(in: cookiesLayer)
+    // 2
+    let (success, column, row) = convertPoint(location)
+    if success {
+      // 3
+      if let cookie = level.cookie(atColumn: column, row: row) {
+        // 4
+        swipeFromColumn = column
+        swipeFromRow = row
+      }
+    }
+  }
+  
+  override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+    // 1
+    guard swipeFromColumn != nil else { return }
+    
+    // 2
+    guard let touch = touches.first else { return }
+    let location = touch.location(in: cookiesLayer)
+    
+    let (success, column, row) = convertPoint(location)
+    if success {
+      
+      // 3
+      var horizontalDelta = 0, verticalDelta = 0
+      if column < swipeFromColumn! {          // swipe left
+        horizontalDelta = -1
+      } else if column > swipeFromColumn! {   // swipe right
+        horizontalDelta = 1
+      } else if row < swipeFromRow! {         // swipe down
+        verticalDelta = -1
+      } else if row > swipeFromRow! {         // swipe up
+        verticalDelta = 1
+      }
+      
+      // 4
+      if horizontalDelta != 0 || verticalDelta != 0 {
+        trySwap(horizontalDelta: horizontalDelta, verticalDelta: verticalDelta)
+        
+        
+        // 5
+        swipeFromColumn = nil
+      }
+    }
+  }
+  
+  private func trySwap(horizontalDelta: Int, verticalDelta: Int) {
+    // 1
+    let toColumn = swipeFromColumn! + horizontalDelta
+    let toRow = swipeFromRow! + verticalDelta
+    // 2
+    guard toColumn >= 0 && toColumn < numColumns else { return }
+    guard toRow >= 0 && toRow < numRows else { return }
+    // 3
+    if let toCookie = level.cookie(atColumn: toColumn, row: toRow),
+      let fromCookie = level.cookie(atColumn: swipeFromColumn!, row: swipeFromRow!) {
+      // 4
+      if let handler = swipeHandler {
+        let swap = Swap(cookieA: fromCookie, cookieB: toCookie)
+        handler(swap)
+      }
+    }
+  }
+  
+  func animate(_ swap: Swap, completion: @escaping () -> Void) {
+    let spriteA = swap.cookieA.sprite!
+    let spriteB = swap.cookieB.sprite!
+    
+    spriteA.zPosition = 100
+    spriteB.zPosition = 90
+    
+    let duration: TimeInterval = 0.3
+    
+    let moveA = SKAction.move(to: spriteB.position, duration: duration)
+    moveA.timingMode = .easeOut
+    spriteA.run(moveA, completion: completion)
+    
+    let moveB = SKAction.move(to: spriteA.position, duration: duration)
+    moveB.timingMode = .easeOut
+    spriteB.run(moveB)
+    
+    run(swapSound)
   }
   
 }
