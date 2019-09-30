@@ -34,7 +34,7 @@ import SpriteKit
 import GameplayKit
 
 
-var swipeHandler: ((Swap) -> Void)?
+
 class GameScene: SKScene {
   // Sound FX
   let swapSound = SKAction.playSoundFileNamed("Chomp.wav", waitForCompletion: false)
@@ -43,6 +43,7 @@ class GameScene: SKScene {
   let fallingCookieSound = SKAction.playSoundFileNamed("Scrape.wav", waitForCompletion: false)
   let addCookieSound = SKAction.playSoundFileNamed("Drip.wav", waitForCompletion: false)
   
+  var swipeHandler: ((Swap) -> Void)?
   var level: Level!
   
   private var swipeFromColumn: Int?
